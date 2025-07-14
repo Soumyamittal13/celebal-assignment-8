@@ -1,0 +1,11 @@
+from pyspark.sql.window import Window
+from pyspark.sql.functions import col, count
+
+# Define a window partitioned by payment_type and ordered by pickup time
+payment_window = Window.partitionBy("payment_type").orderBy("tpep_pickup_datetime").rowsBetween(Window.unboundedPreceding, 0)
+
+# Add a cumulative count column
+df_with_moving_count = df.withColumn("Cumulative_Count", count("*").over(payment_window))
+
+# Display result
+display(df_with_moving_count.select("tpep_pickup_datetime", "payment_type", "Cumulative_Count"))
