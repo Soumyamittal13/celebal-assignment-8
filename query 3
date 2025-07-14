@@ -1,0 +1,10 @@
+from pyspark.sql.functions import avg
+
+# Group by VendorID and calculate average Fare and Total amounts
+avg_fare_by_vendor = df.groupBy("VendorID").agg(
+    avg("Fare_amount").alias("Average_Fare"),
+    avg("Total_amount").alias("Average_Total_Earnings")
+).orderBy("VendorID")
+
+# Display the result
+display(avg_fare_by_vendor)
