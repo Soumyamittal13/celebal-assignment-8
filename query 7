@@ -1,0 +1,25 @@
+from pyspark.sql.functions import window, col, sum as _sum
+
+# Read streaming data from a folder (simulate stream using CSV files arriving over time)
+stream_df = spark.readStream \
+    .option("header", "true") \
+    .option("inferSchema", "true") \
+    .csv("/FileStore/tables/yellow_stream/")  # Replace with your stream source
+
+# Convert pickup datetime and calculate window
+stream_df = stream_df.withColumn("pickup_time", col("tpep_pickup_datetime").cast("timestamp"))
+
+# Group over a sliding 10-second window by pickup location
+passenger_counts = stream_df.groupBy(
+    window("pickup_time", "10 seconds", "5 seconds"),
+    "PULocationID"
+).agg(
+    _sum("passenger_count").alias("Total_Passengers")
+).orderBy(col("Total_Passengers").desc())
+
+# Output to console or dashboard
+query = passenger_counts.writeStream \
+    .outputMode("complete") \
+    .format("console") \
+    .option("truncate", False) \
+    .start()
