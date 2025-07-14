@@ -1,0 +1,3 @@
+# Save as Parquet
+df_flat.write.mode("overwrite").parquet("/mnt/external_parquet/nested_flat")
+
