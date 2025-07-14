@@ -1,0 +1,21 @@
+from pyspark.sql.functions import col, to_date, sum as _sum
+
+# Replace this with the date you're interested in
+target_date = "2020-01-15"
+
+# Extract date from datetime and filter
+df_filtered = df.withColumn("trip_date", to_date("tpep_pickup_datetime")) \
+                .filter(col("trip_date") == target_date)
+
+# Group by VendorID and compute total earnings, passengers, and distance
+vendor_stats = df_filtered.groupBy("VendorID").agg(
+    _sum("Total_amount").alias("Total_Earnings"),
+    _sum("passenger_count").alias("Total_Passengers"),
+    _sum("trip_distance").alias("Total_Distance")
+)
+
+# Order by earnings and get top 2
+top_2_vendors = vendor_stats.orderBy(col("Total_Earnings").desc()).limit(2)
+
+# Display result
+display(top_2_vendors)
