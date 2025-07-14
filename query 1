@@ -1,0 +1,23 @@
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, sum as _sum
+
+# Start Spark session (not needed in Databricks notebooks)
+spark = SparkSession.builder.getOrCreate()
+
+# Load CSV file into a DataFrame
+df = spark.read.option("header", "true").option("inferSchema", "true").csv("/FileStore/tables/yellow_tripdata_2020_01.csv")
+
+# Add a new column "Revenue"
+df_with_revenue = df.withColumn(
+    "Revenue",
+    col("Fare_amount") +
+    col("Extra") +
+    col("MTA_tax") +
+    col("Improvement_surcharge") +
+    col("Tip_amount") +
+    col("Tolls_amount") +
+    col("Total_amount")
+)
+
+# Show the updated DataFrame
+df_with_revenue.select("Fare_amount", "Total_amount", "Revenue").show(5)
