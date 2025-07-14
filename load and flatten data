@@ -1,0 +1,34 @@
+from pyspark.sql.functions import col
+from pyspark.sql.types import StructType, ArrayType
+
+# Load JSON file
+df_raw = spark.read.option("multiLine", True).json("/FileStore/tables/nested_sample.json")
+df_raw.printSchema()
+
+# Flattening function
+def flatten_df(nested_df):
+    flat_cols = []
+    nested_cols = []
+
+    for col_name, dtype in nested_df.dtypes:
+        if "." in col_name:
+            flat_cols.append(col(col_name).alias(col_name.replace(".", "_")))
+        elif isinstance(nested_df.schema[col_name].dataType, StructType):
+            nested_cols.append(col_name)
+        elif isinstance(nested_df.schema[col_name].dataType, ArrayType):
+            pass  # optional: handle arrays
+        else:
+            flat_cols.append(col(col_name))
+
+    flat_df = nested_df.select(*flat_cols)
+
+    for nested_col in nested_cols:
+        expanded = [col(f"{nested_col}.{k.name}").alias(f"{nested_col}_{k.name}")
+                    for k in nested_df.schema[nested_col].dataType.fields]
+        flat_df = flat_df.select("*", *expanded).drop(nested_col)
+
+    return flat_df
+
+# Apply flattening
+df_flat = flatten_df(df_raw)
+display(df_flat)
